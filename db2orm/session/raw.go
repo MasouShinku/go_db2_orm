@@ -22,11 +22,13 @@ type Session struct {
 	refTable *schema.Schema  // 数据库模式
 	clause   clause.Clause   // sql子句
 	tx       *sql.Tx         // 事务锁
+	//joinList []joinInfo      // join数组
 }
 
 // New 创建会话对象
 func New(db *sql.DB, dialect dialect.Dialect) *Session {
 	return &Session{
+		//joinList: make([]joinInfo, 0),
 		db:      db,
 		dialect: dialect,
 	}
@@ -37,6 +39,7 @@ func (s *Session) Clear() {
 	s.sql.Reset()
 	s.sqlVars = nil
 	s.clause = clause.Clause{}
+	//s.joinList = []joinInfo{}
 }
 
 // GetDB 获取DB对象

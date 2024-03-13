@@ -27,12 +27,15 @@ func main() {
 	var user1 = &models.ADMIN{Name: "shinku", Id: 1, Desc: "你是？"}
 	var user2 []models.ADMIN
 
+	//var adminjoinuser []models.ADMINJOINUSER
+
 	s.Insert(user1)
 
 	//s.Model(&models.ADMIN{})
-	s.Join(&models.ADMIN{}).Limit(2).Where("name = ?", "shinku").Find(&user2)
+	//s.Join(USER{}, "left join").Limit(2).Find(&adminjoinuser)
+	s.Limit(2).Find(&user2)
 
-	log.Infoln(len(user2))
+	log.Infoln(user2)
 
 	//s.DropTable()
 

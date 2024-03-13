@@ -17,12 +17,21 @@ const (
 	UPDATE
 	DELETE
 	COUNT
-	JOIN
+	//JOIN
 )
 
+// join类型参数
+type JoinInfo struct {
+	Tablename     string   // join表名
+	FormattedVals []string //格式化后的字段名: $tablename.$val
+	JoinType      string   // join类型
+	OnCond        string   // join条件
+}
+
 type Clause struct {
-	sql     map[Type]string
-	sqlVars map[Type][]interface{}
+	sql      map[Type]string
+	sqlVars  map[Type][]interface{}
+	JoinList []JoinInfo // join数组
 }
 
 // Set 获取操作类型对应的参数
@@ -42,6 +51,12 @@ func (c *Clause) Build(orders ...Type) (string, []interface{}) {
 	var sqls []string
 	var vars []interface{}
 	for _, order := range orders {
+
+		// 为join操作预留空间
+		//if order == JOIN {
+		//
+		//}
+
 		//log.Infoln(fmt.Sprintf("building %s ...", order))
 		if sql, ok := c.sql[order]; ok {
 			sqls = append(sqls, sql)

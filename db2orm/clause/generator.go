@@ -21,7 +21,7 @@ func init() {
 	generators[UPDATE] = _update
 	generators[DELETE] = _delete
 	generators[COUNT] = _count
-	generators[JOIN] = _join
+	//generators[JOIN] = _join
 }
 
 func _insert(values ...interface{}) (string, []interface{}) {
@@ -56,10 +56,36 @@ func _values(values ...interface{}) (string, []interface{}) {
 }
 
 func _select(values ...interface{}) (string, []interface{}) {
+	//log.Infoln(fmt.Sprintf("received parms are %v : ", values))
 	// SELECT $fields FROM $tablename
-	tablename := values[0]
+	tablename := values[0].(string)
 	fields := strings.Join(values[1].([]string), ",")
-	return fmt.Sprintf("SELECT %v FROM %s", fields, tablename), []interface{}{}
+	formattedFields := fmt.Sprintf("%s.%s", tablename, strings.ReplaceAll(fields, ",", ","+tablename+"."))
+
+	// 接下来进行join语句的拼接
+	joinList := values[2].([]JoinInfo)
+	fieldsSql := formattedFields
+	tableSql := tablename
+	for i := 0; i < len(joinList); i++ {
+		for j := 0; j < len(joinList[i].FormattedVals); j++ {
+			fieldsSql = fmt.Sprintf("%s,%s", fieldsSql, joinList[i].FormattedVals[j])
+
+		}
+		tableSql = fmt.Sprintf("%s %s %s ", tableSql, joinList[i].JoinType, joinList[i].Tablename)
+		if joinList[i].OnCond != "" {
+			tableSql = fmt.Sprintf("%s on %s", tableSql, joinList[i].OnCond)
+		} else {
+			tableSql += "on 1"
+		}
+
+	}
+	//log.Infoln(fmt.Sprintf("fieldsql sql is %s : ", fieldsSql))
+	//log.Infoln(fmt.Sprintf("table sql is %s : ", tableSql))
+
+	return fmt.Sprintf("SELECT %s FROM %s", fieldsSql, tableSql), []interface{}{}
+
+	//return fmt.Sprintf("SELECT %v FROM %s", formattedFields, tablename), []interface{}{}
+	//return fmt.Sprintf("SELECT %v FROM %s", fields, tablename), []interface{}{}
 }
 
 func _limit(values ...interface{}) (string, []interface{}) {
@@ -102,6 +128,7 @@ func _count(values ...interface{}) (string, []interface{}) {
 	return _select(tablename, []string{"count(*)"})
 }
 
-func _join(values ...interface{}) (string, []interface{}) {
-	return fmt.Sprintf("JOIN %s", values[0]), []interface{}{}
-}
+//func _join(values ...interface{}) (string, []interface{}) {
+//	// 暂时不设置条件，默认on 1
+//	return fmt.Sprintf("JOIN %s on 1", values[0]), []interface{}{}
+//}

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"go_db2_orm/db2orm/clause"
 	"go_db2_orm/db2orm/log"
-
+	"go_db2_orm/db2orm/schema"
 	"reflect"
 )
 
@@ -53,31 +53,42 @@ func (s *Session) Find(values interface{}) error {
 
 	// 获取元素类型，并映射出表结构
 	destType := destSlice.Type().Elem()
-	table := s.Model(reflect.New(destType).Elem().Interface()).RefTable()
-
+	//table := s.Model(reflect.New(destType).Elem().Interface()).RefTable()
+	table := s.RefTable()
 	// 拼接出select语句并执行
-	s.clause.Set(clause.SELECT, table.Name, table.FieldNames)
-	sql, vars := s.clause.Build(clause.SELECT, clause.JOIN, clause.WHERE, clause.ORDERBY, clause.LIMIT)
+	s.clause.Set(clause.SELECT, table.Name, table.FieldNames, s.clause.JoinList)
+	sql, vars := s.clause.Build(clause.SELECT, clause.WHERE, clause.ORDERBY, clause.LIMIT)
 	//sql, vars := s.clause.Build(clause.SELECT)
-	log.Infoln(fmt.Sprintf("here is sql : %s", sql))
+	//log.Infoln(fmt.Sprintf("here is sql : %s", sql))
 	rows, err := s.Raw(sql, vars...).QueryRows()
+
+	//columns, err := rows.Columns()
+	//for _, column := range columns {
+	//	fmt.Printf(column)
+	//}
+
 	if err != nil {
 		return err
 	}
+
+	tempRefTable := schema.Parse(reflect.New(destType).Interface(), s.dialect)
 
 	// 将结果平铺，遍历后按字段赋值
 	for rows.Next() {
 		dest := reflect.New(destType).Elem()
 		var values []interface{}
-		for _, name := range table.FieldNames {
+		for _, name := range tempRefTable.FieldNames {
 			values = append(values, dest.FieldByName(name).Addr().Interface())
 		}
+
 		if err := rows.Scan(values...); err != nil {
+			log.Errorln(err)
 			return err
 		}
 		s.CallMethod(AfterQuery, dest.Addr().Interface())
 		destSlice.Set(reflect.Append(destSlice, dest))
 	}
+	log.Infoln(destSlice.Len())
 	return rows.Close()
 }
 
@@ -166,13 +177,33 @@ func (s *Session) First(value interface{}) error {
 	return nil
 }
 
-// Join
-func (s *Session) Join(value interface{}) *Session {
+// Join 第一个参数是struct,第二个参数是joinType,第三个参数是cond
+func (s *Session) Join(value interface{}, joinType string, cond ...string) *Session {
 	valueType := reflect.TypeOf(value)
 	if valueType.Kind() == reflect.Ptr {
 		valueType = valueType.Elem()
 	}
 	tabname := valueType.Name()
-	s.clause.Set(clause.JOIN, tabname)
+	//s.clause.Set(clause.JOIN, tabname)
+
+	// 更新join数组
+	var newJoinInfo clause.JoinInfo
+	newJoinInfo.JoinType = joinType
+	if len(cond) > 0 {
+		newJoinInfo.OnCond = cond[0]
+	}
+	newJoinInfo.Tablename = tabname
+	for i := 0; i < valueType.NumField(); i++ {
+		fieldName := valueType.Field(i).Name
+		newJoinInfo.FormattedVals = append(newJoinInfo.FormattedVals, fmt.Sprintf("%s.%s", tabname, fieldName))
+	}
+
+	s.clause.JoinList = append(s.clause.JoinList, newJoinInfo)
+
+	//log.Infoln(fmt.Sprintf("%v", newJoinInfo))
+
+	// 传送点
+	// 这里需要重新设置一下select的参数
+
 	return s
 }
