@@ -20,7 +20,7 @@ func (d *go_ibm_db) DataTypeOf(typ reflect.Value) string {
 	case reflect.Bool:
 		return "BOOLEAN"
 	case reflect.String:
-		return "VARCHAR(255)" // DB2 使用 VARCHAR 存储字符串，这里假设一个默认长度，实际应用中可能需要根据实际需求调整
+		return "VARCHAR(255)" // DB2 使用 VARCHAR 存储字符串
 	case reflect.Array, reflect.Slice:
 		return "BLOB" // 对应二进制大对象
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32:

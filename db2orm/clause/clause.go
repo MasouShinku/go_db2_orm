@@ -52,12 +52,6 @@ func (c *Clause) Build(orders ...Type) (string, []interface{}) {
 	var vars []interface{}
 	for _, order := range orders {
 
-		// 为join操作预留空间
-		//if order == JOIN {
-		//
-		//}
-
-		//log.Infoln(fmt.Sprintf("building %s ...", order))
 		if sql, ok := c.sql[order]; ok {
 			sqls = append(sqls, sql)
 			vars = append(vars, c.sqlVars[order]...)
