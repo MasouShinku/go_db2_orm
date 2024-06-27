@@ -7,8 +7,7 @@ import (
 	"go_db2_orm/models"
 )
 
-// var con = "HOSTNAME=localhost;DATABASE=mydb;PORT=50000;UID=db2inst1;PWD=ky20021120"
-var con = "HOSTNAME=1.94.43.50;DATABASE=testdb;PORT=60000;UID=db2inst1;PWD=db2inst1"
+var con = "HOSTNAME=x.xx.xx.xx;DATABASE=testdb;PORT=60000;UID=db2inst1;PWD=db2inst1"
 
 //type USER struct {
 //	Name string `db2orm:"PRIMARY KEY NOT NULL"`
